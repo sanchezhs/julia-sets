@@ -2,6 +2,7 @@ import queue
 import random
 import threading
 from collections import namedtuple
+from numpy._typing import NDArray
 from tkinter import *
 from tkinter import filedialog, ttk
 
@@ -26,16 +27,16 @@ class JuliaSetImage:
         max_iter=100,
         colorscheme="twilight",
     ):
-        self.width = width
-        self.height = height
-        self.x_min = x_min
-        self.x_max = x_max
-        self.y_min = y_min
-        self.y_max = y_min
-        self.c = c
-        self.max_iter = max_iter
-        self.colorscheme = colorscheme
-        self.image = None
+        self.width: int = width
+        self.height: int = height
+        self.x_min: float = x_min
+        self.x_max: float = x_max
+        self.y_min: float = y_min
+        self.y_max: float = y_min
+        self.c: complex = c
+        self.max_iter: int = max_iter
+        self.colorscheme: str = colorscheme
+        self.image: Image.Image | None = None
 
     def generate_image_data(self, progress_callback):
         aspect_ratio = self.width / self.height
@@ -187,7 +188,6 @@ class JuliaSetGUI:
         self.im_entry.grid(row=0, column=3, padx=5)
         self.im_entry.insert(0, "0")
 
-        # Botón para generar un valor aleatorio de c
         random_button = ttk.Button(
             c_frame, text="Random", command=self.generate_random_c
         )
@@ -258,13 +258,9 @@ class JuliaSetGUI:
             )
             self.julia_image.max_iter = int(self.max_iter_entry.get())
             self.julia_image.colorscheme = self.colorscheme_combobox.get()
-
-            # Generar datos de imagen (esto puede ser intensivo)
             image_data = self.julia_image.generate_image_data(
                 progress_callback=self.report_progress
             )
-
-            # Poner los datos en la cola para que el hilo principal los procese
             self.queue.put(image_data)
             self.generate_button["state"] = "normal"
         except Exception as e:
@@ -272,7 +268,7 @@ class JuliaSetGUI:
             self.queue.put(None)
             self.generate_button["state"] = "normal"
 
-    def report_progress(self, progress):
+    def report_progress(self, progress: int):
         self.progress_queue.put(progress)
 
     def check_progress_queue(self):
@@ -301,7 +297,7 @@ class JuliaSetGUI:
         self.progress["value"] = 100
         self.progress.grid_remove()
 
-    def display_image(self, image_data):
+    def display_image(self, image_data: NDArray[np.float64]):
         norm = plt.Normalize(vmin=image_data.min(), vmax=image_data.max())
         cmap = plt.get_cmap(self.julia_image.colorscheme)
         image_rgb = cmap(norm(image_data))
@@ -310,7 +306,6 @@ class JuliaSetGUI:
         self.julia_image.image = self.julia_image.image.resize(
             (self.julia_image.width, self.julia_image.height)
         )
-
         img_tk = ImageTk.PhotoImage(self.julia_image.image)
         self.canvas.create_image(0, 0, anchor="nw", image=img_tk)
         self.canvas.image = img_tk
